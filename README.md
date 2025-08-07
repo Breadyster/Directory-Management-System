@@ -1,82 +1,117 @@
 #include <iostream>
-#include <direct.h>       
-#include <filesystem>     
 #include <string>
+#include <direct.h>
 
-namespace fs = std::filesystem;
+void listAllFiles() {
+    std::cout << "\nFiles in current directory:\n";
+    system("dir /b");
+}
+
+void listFilesByExtension(const std::string& ext) {
+    std::string command = "dir /b *" + ext;
+    std::cout << "\nFiles with extension '" << ext << "':\n";
+    system(command.c_str());
+}
+
+void listFilesByPattern(const std::string& pattern) {
+    std::string command = "dir /b " + pattern;
+    std::cout << "\nFiles matching pattern '" << pattern << "':\n";
+    system(command.c_str());
+}
+
+void listFiles() {
+    int subchoice;
+    std::string input;
+    do {
+        std::cout << "\n--- List Files Submenu ---\n";
+        std::cout << "[1] List All Files\n";
+        std::cout << "[2] List Files by Extension\n";
+        std::cout << "[3] List Files by Pattern\n";
+        std::cout << "[4] Back to Main Menu\n";
+        std::cout << "Enter your choice: ";
+        std::cin >> subchoice;
+        std::cin.ignore();
+        switch (subchoice) {
+            case 1:
+                listAllFiles();
+                break;
+            case 2:
+                std::cout << "Enter file extension (e.g., .txt): ";
+                std::getline(std::cin, input);
+                listFilesByExtension(input);
+                break;
+            case 3:
+                std::cout << "Enter file pattern (e.g., moha*.*): ";
+                std::getline(std::cin, input);
+                listFilesByPattern(input);
+                break;
+            case 4:
+                break;
+            default:
+                std::cout << "Invalid choice. Try again.\n";
+        }
+    } while (subchoice != 4);
+}
 
 void createDirectory(const std::string& path) {
     if (_mkdir(path.c_str()) == 0) {
-        std::cout << "Directory created: " << path << std::endl;
+        std::cout << "Directory created successfully: " << path << "\n";
     } else {
-        std::cout << "Failed to create directory or it already exists.\n";
+        std::cout << "Failed to create directory (it may already exist).\n";
     }
 }
 
-void deleteDirectory(const std::string& path) {
-    try {
-        if (fs::remove_all(path) > 0) {
-            std::cout << "Directory deleted: " << path << std::endl;
-        } else {
-            std::cout << "Directory does not exist.\n";
-        }
-    } catch (fs::filesystem_error& e) {
-        std::cerr << "Error deleting directory: " << e.what() << std::endl;
-    }
-}
-
-void listFiles(const std::string& path) {
-    if (!fs::exists(path)) {
-        std::cout << "Directory does not exist.\n";
-        return;
-    }
-
-    std::cout << "Contents of directory: " << path << std::endl;
-    for (const auto& entry : fs::directory_iterator(path)) {
-        std::cout << (entry.is_directory() ? "[DIR] " : "[FILE] ") 
-                  << entry.path().filename().string() << std::endl;
-    }
-}
-
-int main() {
+void changeDirectory() {
     std::string path;
+    std::cout << "Enter directory path to change to: ";
+    std::getline(std::cin, path);
+    if (_chdir(path.c_str()) == 0) {
+        char cwd[260];
+        _getcwd(cwd, sizeof(cwd));
+        std::cout << "Current directory changed to: " << cwd << "\n";
+    } else {
+        std::cout << "Error: Directory does not exist or cannot be accessed.\n";
+    }
+}
+
+void mainMenu() {
     int choice;
-
     do {
-        std::cout << "\n--- Directory Management System ---\n";
-        std::cout << "1. Create Directory\n";
-        std::cout << "2. Delete Directory\n";
-        std::cout << "3. List Directory Contents\n";
-        std::cout << "4. Exit\n";
-        std::cout << "Enter choice: ";
+        char cwd[260];
+        _getcwd(cwd, sizeof(cwd));
+        std::cout << "\n=== Directory Management System ===\n";
+        std::cout << "[1] List Files\n";
+        std::cout << "[2] Create Directory\n";
+        std::cout << "[3] Change Directory\n";
+        std::cout << "[4] Exit\n";
+        std::cout << "Current Directory: " << cwd << "\n";
+        std::cout << "Enter your choice: ";
         std::cin >> choice;
-
-        std::cin.ignore();  // Clear newline from input buffer
-
+        std::cin.ignore();
         switch (choice) {
             case 1:
-                std::cout << "Enter directory path to create: ";
+                listFiles();
+                break;
+            case 2: {
+                std::string path;
+                std::cout << "Enter directory name to create: ";
                 std::getline(std::cin, path);
                 createDirectory(path);
                 break;
-            case 2:
-                std::cout << "Enter directory path to delete: ";
-                std::getline(std::cin, path);
-                deleteDirectory(path);
-                break;
+            }
             case 3:
-                std::cout << "Enter directory path to list: ";
-                std::getline(std::cin, path);
-                listFiles(path);
+                changeDirectory();
                 break;
             case 4:
-                std::cout << "Exiting...\n";
+                std::cout << "Exiting program.\n";
                 break;
             default:
-                std::cout << "Invalid choice.\n";
+                std::cout << "Invalid choice. Try again.\n";
         }
-
     } while (choice != 4);
+}
 
+int main() {
+    mainMenu();
     return 0;
 }
